@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Card Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; 
+background:url('background.jpg');
+background-size:cover;
+color:#fff;}
+    .game-container {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      gap: 10px;
+      justify-content: center;
+    }
+    .card {
+      width: 100px;
+      height: 100px;
+      background: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      cursor: pointer;
+      border-radius: 10px;
+      user-select: none;
+    }
+    .matched {
+      background: #8fbc8f !important;
+      pointer-events: none;
+    }
+    #startSection {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Memory Card Game</h2>
+
+<div id="startSection">
+  <input id="name1" type="text" placeholder="Player 1 Name" />
+  <input id="name2" type="text" placeholder="Player 2 Name" />
+  <button onclick="initializeGame()">Start Game</button>
+</div>
+
+<p id="playerTurn"></p>
+<p><span id="player1"></span>: <span id="scoreP1">0</span> |
+   <span id="player2"></span>: <span id="scoreP2">0</span></p>
+<div class="game-container" id="gameBoard"></div>
+<button onclick="restartGame()">Restart Game</button>
+
+<!-- Sound Effects -->
+<audio id="flipSound" src="flip.mp3" preload="auto"></audio>
+<audio id="matchSound" src="match.mp3" preload="auto"></audio>
+
+<script>
+  let emojis = ["😄", "🤣", "🥰", "😜", "🥺", "🥱", "😡", "😈"];
+  let cards, selected, playerTurn, scores;
+  let playerNames = { 1: "Player 1", 2: "Player 2" };
+
+  function initializeGame() {
+    const name1 = document.getElementById("name1").value || "Player 1";
+    const name2 = document.getElementById("name2").value || "Player 2";
+    playerNames[1] = name1;
+    playerNames[2] = name2;
+
+    document.getElementById("player1").textContent = name1;
+    document.getElementById("player2").textContent = name2;
+    document.getElementById("playerTurn").textContent = `${name1}'s turn`;
+
+    cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+    selected = [];
+    playerTurn = 1;
+    scores = { 1: 0, 2: 0 };
+    document.getElementById("scoreP1").textContent = 0;
+    document.getElementById("scoreP2").textContent = 0;
+    generateBoard();
+  }
+
+  function generateBoard() {
+    const board = document.getElementById("gameBoard");
+    board.innerHTML = "";
+    cards.forEach((emoji, index) => {
+      let card = document.createElement("div");
+      card.className = "card";
+      card.dataset.index = index;
+      card.dataset.emoji = emoji;
+      card.textContent = "❓";
+      card.onclick = () => flipCard(card);
+      board.appendChild(card);
+    });
+  }
+
+  function flipCard(card) {
+  if (selected.length < 2 && !card.classList.contains("matched") && !selected.includes(card)) {
+    card.textContent = card.dataset.emoji;
+    selected.push(card);
+    document.getElementById("flipSound").play(); // Play flip sound
+  }
+
+  if (selected.length === 2) {
+    setTimeout(checkMatch, 700);
+  }
+}
+
+function checkMatch() {
+  let [card1, card2] = selected;
+  if (card1.dataset.emoji === card2.dataset.emoji) {
+    card1.classList.add("matched");
+    card2.classList.add("matched");
+    scores[playerTurn]++;
+    document.getElementById(`scoreP${playerTurn}`).textContent = scores[playerTurn];
+    document.getElementById("matchSound").play(); // Play match sound
+  } else {
+    card1.textContent = "❓";
+    card2.textContent = "❓";
+    playerTurn = playerTurn === 1 ? 2 : 1;
+    document.getElementById("playerTurn").textContent = `${playerNames[playerTurn]}'s turn`;
+  }
+  selected = [];
+
+  if (document.querySelectorAll(".matched").length === cards.length) {
+    setTimeout(() => {
+      let winner = scores[1] > scores[2]
+        ? `${playerNames[1]} Wins!`
+        : scores[1] < scores[2]
+        ? `${playerNames[2]} Wins!`
+        : "It's a Tie!";
+      alert(`Game Over! ${winner}`);
+    }, 300);
+  }
+}
+  function restartGame() {
+    initializeGame();
+  }
+</script>
+
+</body>
+</html>
